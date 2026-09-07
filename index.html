@@ -85,7 +85,7 @@ td[contenteditable=true]:focus{background:#00603322;outline:1px solid var(--53gl
 </style>
 
 <header>
-  <div class="logo">5/3</div>
+  <div class="logo" style="padding:4px 8px;background:#fff;border-radius:6px;display:flex;align-items:center"><img src="https://www.53.com/content/dam/fifth-third/brand/logos/53-logo.svg" alt="Fifth Third Bank" style="height:28px;width:auto" onerror="this.parentElement.innerHTML='5/3'"></div>
   <div>
     <div style="display:flex;align-items:baseline;gap:8px">
       <h1>Fifth Third Conversion Weekend</h1>
@@ -578,10 +578,14 @@ async function loadLA(){
   const ts=document.getElementById('la_ts');
   body.innerHTML='<div style="text-align:center;color:var(--muted);padding:40px;font-size:.8rem">&#8635; Fetching from Smartsheet...</div>';
   try{
-    const res=await fetch(`https://api.smartsheet.com/2.0/sheets/${SS_SHEET}`,{
-      headers:{'Authorization':'Bearer '+SS_TOKEN}
-    });
-    if(!res.ok){const e=await res.json();throw new Error(e.message||res.status);}
+    // Try direct first, fall back to CORS proxy
+    let res;
+    try{
+      res=await fetch(`https://api.smartsheet.com/2.0/sheets/${SS_SHEET}`,{headers:{'Authorization':'Bearer '+SS_TOKEN}});
+    }catch(corsErr){
+      res=await fetch(`https://corsproxy.io/?url=${encodeURIComponent('https://api.smartsheet.com/2.0/sheets/'+SS_SHEET)}`,{headers:{'Authorization':'Bearer '+SS_TOKEN}});
+    }
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.message||res.status);}
     const d=await res.json();
     const colMap={};
     d.columns.forEach(c=>{colMap[c.id]=c.title;});
