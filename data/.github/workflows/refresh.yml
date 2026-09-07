@@ -1,0 +1,42 @@
+name: Refresh Dashboard
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'   # every 10 minutes
+  workflow_dispatch:            # allow manual trigger from GitHub UI
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch survey data from Smartsheet
+        env:
+          SMARTSHEET_TOKEN: ${{ secrets.SMARTSHEET_TOKEN }}
+          SMARTSHEET_SHEET_ID: '2975683629240196'
+        run: python fetch_surveys.py
+
+      - name: Generate dashboard HTML
+        run: python gen_dash.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html data/surv_recs.json
+          git diff --staged --quiet || git commit -m "Auto-refresh: $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
