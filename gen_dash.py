@@ -321,8 +321,11 @@ function initOV(){
   document.getElementById('sevDL').innerHTML=[['Yellow — Needs Attention',Y],['Green — Good',G],['Blue — Special',B]].map(([l,c])=>`<div class="item"><div class="dot" style="background:${c}"></div>${l}</div>`).join('');
   const _svDay={'2026-09-04':0,'2026-09-05':0,'2026-09-06':0,'2026-09-07':0};
   svData.forEach(r=>{if(r.date&&_svDay[r.date]!==undefined)_svDay[r.date]++;});
+  // WO date is MM/DD/YYYY — normalize to match
+  const _woDay={'9/4/2026':0,'9/5/2026':0,'9/6/2026':0,'9/7/2026':0};
+  woData.forEach(r=>{if(r.date&&_woDay[r.date]!==undefined)_woDay[r.date]++;});
   new Chart(document.getElementById('cDaily'),{type:'line',data:{labels:['Sep 4','Sep 5','Sep 6','Sep 7'],datasets:[
-    {label:'Work Orders',data:[4,412,550,0],borderColor:G,backgroundColor:G+'22',fill:true,tension:.4,pointRadius:5},
+    {label:'Work Orders',data:[_woDay['9/4/2026'],_woDay['9/5/2026'],_woDay['9/6/2026'],_woDay['9/7/2026']],borderColor:G,backgroundColor:G+'22',fill:true,tension:.4,pointRadius:5},
     {label:'Surveys',data:[_svDay['2026-09-04'],_svDay['2026-09-05'],_svDay['2026-09-06'],_svDay['2026-09-07']],borderColor:B,backgroundColor:B+'22',fill:true,tension:.4,pointRadius:5}
   ]},options:{plugins:{legend:{labels:{boxWidth:9}}},scales:{x:{grid:{color:'#2a3040'}},y:{grid:{color:'#2a3040'}}}}});
   bar('cState',['MI','TX','CA','AZ','FL'],[447,300,157,54,8],PAL);
