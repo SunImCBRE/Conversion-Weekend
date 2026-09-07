@@ -30,6 +30,9 @@ jobs:
           SMARTSHEET_SHEET_ID: '2975683629240196'
         run: python fetch_surveys.py
 
+      - name: Convert work order file (CSV or XLSX) if present
+        run: python convert_wo.py
+
       - name: Generate dashboard HTML
         run: python gen_dash.py
 
@@ -37,6 +40,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html data/surv_recs.json
+          git add index.html data/surv_recs.json data/wo_recs.json
           git diff --staged --quiet || git commit -m "Auto-refresh: $(date -u '+%Y-%m-%d %H:%M UTC')"
           git push
