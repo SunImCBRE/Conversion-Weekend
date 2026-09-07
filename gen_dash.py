@@ -161,7 +161,7 @@ td[contenteditable=true]:focus{background:#00603322;outline:1px solid var(--53gl
   <div class="kpis" id="sv_kpis"></div>
   <div class="charts">
     <div class="chart-card"><h3>Daily Survey Volume</h3><div class="cw"><canvas id="cSvD"></canvas></div></div>
-    <div class="chart-card"><h3>Issues Identified by State</h3><div class="cw"><canvas id="cSvSt"></canvas></div></div>
+    <div class="chart-card"><h3>Sep 7 Assessment Progress</h3><div id="assessGrid"></div></div>
   </div>
   <div class="filters">
     <select id="sf_st" onchange="fSV()"><option value="">All States</option></select>
@@ -389,13 +389,60 @@ function initSV(){
   const dayMap={'2026-09-04':0,'2026-09-05':0,'2026-09-06':0,'2026-09-07':0};
   svData.forEach(r=>{if(r.date&&dayMap[r.date]!==undefined)dayMap[r.date]++;});
   bar('cSvD',['Sep 4','Sep 5','Sep 6','Sep 7'],[dayMap['2026-09-04'],dayMap['2026-09-05'],dayMap['2026-09-06'],dayMap['2026-09-07']],[G,G,G,G]);
-  const stIs={},stTot={};
-  svData.forEach(r=>{if(!r.state)return;stTot[r.state]=(stTot[r.state]||0)+1;if(Number(r.issues)>0)stIs[r.state]=(stIs[r.state]||0)+1;});
-  const stL=Object.keys(stTot).sort();
-  new Chart(document.getElementById('cSvSt'),{type:'bar',data:{labels:stL,datasets:[
-    {label:'Issues',data:stL.map(s=>stIs[s]||0),backgroundColor:R+'88',borderRadius:4},
-    {label:'Clean',data:stL.map(s=>(stTot[s]||0)-(stIs[s]||0)),backgroundColor:G+'88',borderRadius:4}
-  ]},options:{plugins:{legend:{labels:{boxWidth:9}}},scales:{x:{stacked:true,grid:{color:'#2a3040'}},y:{stacked:true,grid:{color:'#2a3040'}}}}});
+  // Sep 7 Assessment Progress grid
+  const locCount={};
+  tmData.forEach(r=>{if(r.State)locCount[r.State]=(locCount[r.State]||0)+1;});
+  const sep7done={};
+  svData.forEach(r=>{if(r.date==='2026-09-07'&&r.state)sep7done[r.state]=(sep7done[r.state]||0)+1;});
+  const states7=Object.keys(locCount).sort();
+  const totLoc=states7.reduce((a,s)=>a+(locCount[s]||0),0);
+  const totDone=states7.reduce((a,s)=>a+(sep7done[s]||0),0);
+  const totRem=totLoc-totDone;
+  const totRate=totLoc?Math.round(totDone/totLoc*100):0;
+  document.getElementById('assessGrid').innerHTML=`
+    <table style="width:100%;border-collapse:collapse;font-size:.78rem">
+      <thead><tr style="border-bottom:2px solid var(--border)">
+        <th style="padding:7px 10px;text-align:left;color:var(--muted);font-size:.63rem;text-transform:uppercase;letter-spacing:.5px">State</th>
+        <th style="padding:7px 10px;text-align:center;color:var(--muted);font-size:.63rem;text-transform:uppercase;letter-spacing:.5px">Locations</th>
+        <th style="padding:7px 10px;text-align:center;color:var(--muted);font-size:.63rem;text-transform:uppercase;letter-spacing:.5px">Completed</th>
+        <th style="padding:7px 10px;text-align:center;color:var(--muted);font-size:.63rem;text-transform:uppercase;letter-spacing:.5px">Remaining</th>
+        <th style="padding:7px 10px;text-align:left;color:var(--muted);font-size:.63rem;text-transform:uppercase;letter-spacing:.5px">Rate</th>
+      </tr></thead>
+      <tbody>
+        ${states7.map(s=>{
+          const loc=locCount[s]||0,done=sep7done[s]||0,rem=loc-done,rate=loc?Math.round(done/loc*100):0;
+          const barColor=rate>=75?G:rate>=40?Y:R;
+          return`<tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:8px 10px;font-weight:700;color:var(--white)">${s}</td>
+            <td style="padding:8px 10px;text-align:center;color:var(--muted)">${loc}</td>
+            <td style="padding:8px 10px;text-align:center;color:${G};font-weight:700">${done}</td>
+            <td style="padding:8px 10px;text-align:center;color:${rem>0?R:G};font-weight:700">${rem}</td>
+            <td style="padding:8px 10px;min-width:120px">
+              <div style="display:flex;align-items:center;gap:7px">
+                <div style="flex:1;background:var(--border);border-radius:20px;height:7px;overflow:hidden">
+                  <div style="width:${rate}%;height:100%;background:${barColor};border-radius:20px;transition:.4s"></div>
+                </div>
+                <span style="font-weight:700;color:${barColor};min-width:32px">${rate}%</span>
+              </div>
+            </td>
+          </tr>`;
+        }).join('')}
+        <tr style="border-top:2px solid var(--border);background:var(--card2)">
+          <td style="padding:9px 10px;font-weight:800;color:var(--white)">Totals</td>
+          <td style="padding:9px 10px;text-align:center;font-weight:700;color:var(--white)">${totLoc}</td>
+          <td style="padding:9px 10px;text-align:center;font-weight:700;color:${G}">${totDone}</td>
+          <td style="padding:9px 10px;text-align:center;font-weight:700;color:${totRem>0?R:G}">${totRem}</td>
+          <td style="padding:9px 10px">
+            <div style="display:flex;align-items:center;gap:7px">
+              <div style="flex:1;background:var(--border);border-radius:20px;height:7px;overflow:hidden">
+                <div style="width:${totRate}%;height:100%;background:${totRate>=75?G:totRate>=40?Y:R};border-radius:20px"></div>
+              </div>
+              <span style="font-weight:800;color:${totRate>=75?G:totRate>=40?Y:R};min-width:32px">${totRate}%</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>`;
   const states=[...new Set(svData.map(r=>r.state))].filter(Boolean).sort();
   const dates=[...new Set(svData.map(r=>r.date).filter(d=>d&&d.startsWith('2026')))].sort();
   const ppms=[...new Set(svData.map(r=>r.ppm))].filter(Boolean).sort();
