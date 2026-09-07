@@ -104,6 +104,7 @@ td[contenteditable=true]:focus{background:#00603322;outline:1px solid var(--53gl
   <div class="tab" onclick="nav('sv',this)">Field Surveys</div>
   <div class="tab" onclick="nav('tm',this)">Team Assignments</div>
   <div class="tab" onclick="nav('dt',this)">Data Tables</div>
+  <div class="tab" onclick="nav('la',this)">&#128202; Live Assessments</div>
 </div>
 
 <!-- OVERVIEW -->
@@ -212,6 +213,25 @@ td[contenteditable=true]:focus{background:#00603322;outline:1px solid var(--53gl
       <th>Row</th><th>Property</th><th>City</th><th>St</th><th>Date</th><th>Inspector</th><th>Severity</th><th>All Done</th><th>D2?</th><th>WOs Req</th><th>WOs Comp</th><th></th>
     </tr></thead><tbody id="dtsTb"></tbody></table></div>
     <div class="pg"><button onclick="dtsP(-1)">&#8592;</button><span id="dtsPI"></span><button onclick="dtsP(1)">&#8594;</button></div>
+  </div>
+</div>
+
+<!-- LIVE ASSESSMENTS -->
+<div class="page" id="la">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <div>
+      <div style="font-size:.9rem;font-weight:700;color:var(--white)">Live Assessment Tracker</div>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:2px">Live data from Smartsheet &mdash; refreshes automatically</div>
+    </div>
+    <a href="https://app.smartsheet.com/b/publish?EQBCT=172a3ee1368046d98b6b853c9d154cfa" target="_blank" style="margin-left:auto;background:var(--card2);border:1px solid var(--border);color:var(--53gl);padding:6px 13px;border-radius:6px;font-size:.74rem;text-decoration:none">&#8599; Open in Smartsheet</a>
+  </div>
+  <div style="border-radius:9px;overflow:hidden;border:1px solid var(--border);background:var(--card)">
+    <iframe
+      src="https://app.smartsheet.com/b/publish?EQBCT=172a3ee1368046d98b6b853c9d154cfa"
+      style="width:100%;height:78vh;border:none;display:block"
+      title="Live Assessment Tracker"
+      loading="lazy">
+    </iframe>
   </div>
 </div>
 
