@@ -221,13 +221,17 @@ td[contenteditable=true]:focus{background:#00603322;outline:1px solid var(--53gl
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
     <div>
       <div style="font-size:.9rem;font-weight:700;color:var(--white)">Live Assessment Tracker</div>
-      <div style="font-size:.72rem;color:var(--muted);margin-top:2px" id="la_ts">Loading from Smartsheet...</div>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:2px">Live data from Smartsheet &mdash; auto-refreshes every 10 min</div>
     </div>
-    <button onclick="loadLA()" style="background:var(--card2);border:1px solid var(--border);color:var(--53gl);padding:6px 13px;border-radius:6px;font-size:.74rem;cursor:pointer">&#8635; Refresh</button>
-    <a href="https://app.smartsheet.com/b/publish?EQBCT=172a3ee1368046d98b6b853c9d154cfa" target="_blank" style="background:var(--card2);border:1px solid var(--border);color:var(--muted);padding:6px 13px;border-radius:6px;font-size:.74rem;text-decoration:none">&#8599; Open in Smartsheet</a>
+    <button onclick="reloadLA()" style="background:var(--card2);border:1px solid var(--border);color:var(--53gl);padding:6px 13px;border-radius:6px;font-size:.74rem;cursor:pointer">&#8635; Refresh Now</button>
+    <a href="https://app.smartsheet.com/b/publish?EQBCT=172a3ee1368046d98b6b853c9d154cfa" target="_blank" style="background:var(--card2);border:1px solid var(--border);color:var(--muted);padding:6px 13px;border-radius:6px;font-size:.74rem;text-decoration:none">&#8599; Open full view</a>
   </div>
-  <div id="la_body" style="background:var(--card);border:1px solid var(--border);border-radius:9px;padding:20px;min-height:200px">
-    <div style="text-align:center;color:var(--muted);padding:40px;font-size:.8rem">Fetching data...</div>
+  <div style="border-radius:9px;overflow:hidden;border:1px solid var(--border);background:#fff">
+    <iframe id="la_frame"
+      src="https://app.smartsheet.com/b/publish?EQBCT=172a3ee1368046d98b6b853c9d154cfa"
+      style="width:100%;height:78vh;border:none;display:block"
+      title="Live Assessment Tracker">
+    </iframe>
   </div>
 </div>
 
@@ -570,55 +574,12 @@ function xWO(){dl(csv(woE,['wo','building','city','state','priority','status','s
 function xSV(){dl(csv(svE,['rownum','propid','name','city','state','date','inspector','ppm','rem','rd','rsm','severity','allDone','hasDay2','woReq','woComp','woDisp','woCan']),'5third_surveys.csv');}
 function xTM(){dl(csv(tmE,['Team','Assigned','PropertyID','CMAPropertyID','PropertyName','Address','City','State','Zip','County','Ownership','Type']),'5third_team_assignments.csv');}
 
-// ---- LIVE ASSESSMENTS (Smartsheet API) ----
-const SS_TOKEN='WGPM2Ulym8OjPopHt0r1KZuKQeYKzvMmauL71';
-const SS_SHEET='2975683629240196';
-async function loadLA(){
-  const body=document.getElementById('la_body');
-  const ts=document.getElementById('la_ts');
-  body.innerHTML='<div style="text-align:center;color:var(--muted);padding:40px;font-size:.8rem">&#8635; Fetching from Smartsheet...</div>';
-  try{
-    const SS_URL=`https://api.smartsheet.com/2.0/sheets/${SS_SHEET}`;
-    const PROXY=`https://corsproxy.io/?${SS_URL}`;
-    let res;
-    try{
-      res=await fetch(SS_URL,{headers:{'Authorization':'Bearer '+SS_TOKEN}});
-      if(!res.ok&&res.status===0)throw new Error('CORS');
-    }catch(e){
-      res=await fetch(PROXY,{headers:{'Authorization':'Bearer '+SS_TOKEN}});
-    }
-    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.message||res.status);}
-    const d=await res.json();
-    const colMap={};
-    d.columns.forEach(c=>{colMap[c.id]=c.title;});
-    const cols=d.columns.map(c=>c.title);
-    // Find key column indices
-    const ci=(name)=>d.columns.findIndex(c=>c.title.toLowerCase().includes(name.toLowerCase()));
-    const rows=d.rows.map(row=>{
-      const obj={};
-      row.cells.forEach(cell=>{obj[colMap[cell.columnId]]=cell.displayValue??cell.value??'';});
-      return obj;
-    });
-    // Build table
-    const today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'numeric',day:'numeric',year:'numeric'});
-    let html=`<div style="font-weight:700;color:var(--53n);background:#dbeafe;padding:10px 14px;border-radius:6px 6px 0 0;font-size:.85rem;margin:-20px -20px 0 -20px">${d.name||today}</div>`;
-    html+=`<div style="overflow-x:auto;margin-top:14px"><table style="width:100%;border-collapse:collapse;font-size:.8rem">`;
-    html+=`<thead><tr>${cols.map(c=>`<th style="padding:8px 12px;text-align:left;background:var(--card2);color:var(--muted);font-size:.68rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap">${c}</th>`).join('')}</tr></thead><tbody>`;
-    rows.forEach((row,i)=>{
-      const bg=i%2===0?'transparent':'#78BE2006';
-      const isTotals=Object.values(row).some(v=>String(v).toLowerCase()==='totals'||String(v).toLowerCase()==='total');
-      const rowStyle=isTotals?'background:var(--53n);font-weight:700':'background:'+bg;
-      const tdColor=isTotals?'color:#fff':'color:var(--text)';
-      html+=`<tr style="${rowStyle}">${cols.map(c=>`<td style="padding:8px 12px;border-bottom:1px solid var(--border);${tdColor}">${row[c]??''}</td>`).join('')}</tr>`;
-    });
-    html+=`</tbody></table></div>`;
-    body.innerHTML=html;
-    ts.textContent=`Last refreshed ${new Date().toLocaleTimeString()} — ${rows.length} rows`;
-  }catch(e){
-    body.innerHTML=`<div style="color:#ef4444;padding:20px;font-size:.8rem">&#9888; Error loading Smartsheet: ${e.message}</div>`;
-    ts.textContent='Failed to load';
-  }
+// ---- LIVE ASSESSMENTS (iframe) ----
+function reloadLA(){
+  const f=document.getElementById('la_frame');
+  if(f){f.src=f.src;}
 }
+function loadLA(){reloadLA();}
 
 // ---- NAV ----
 function nav(id,el){
