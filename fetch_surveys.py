@@ -97,11 +97,26 @@ for i, row in enumerate(data.get('rows', [])):
     if not propid and not name:
         continue
 
-    # Derive issues count from condition columns
-    condition_cols = ['parking','drive','sidewalks','windows','landscaping',
-                      'trash','dumpster','entrance','exterior']
-    issues = sum(1 for c in condition_cols
-                 if cell_val(cells, CID.get(c,'')) not in ('','Excellent ready for day 1.','Nothing new','Looks good','good','N/A'))
+    # Derive issues count and capture descriptions
+    GOOD = {'','excellent ready for day 1.','nothing new','looks good','good','n/a','no issues','ok','none'}
+    condition_map = [
+        ('parking',    'Parking Lot/Drive'),
+        ('drive',      'Drive Through'),
+        ('sidewalks',  'Sidewalks'),
+        ('windows',    'Windows'),
+        ('landscaping','Landscaping'),
+        ('trash',      'Trash'),
+        ('dumpster',   'Dumpster Area'),
+        ('entrance',   'Entrance'),
+        ('exterior',   'Exterior Other'),
+        ('signage',    'Temporary Signage'),
+    ]
+    issue_notes = []
+    for col_key, label in condition_map:
+        val = str(cell_val(cells, CID.get(col_key, ''))).strip()
+        if val.lower() not in GOOD and val:
+            issue_notes.append(f"{label}: {val}")
+    issues = len(issue_notes)
 
     # Derive severity
     if issues == 0:
@@ -142,6 +157,7 @@ for i, row in enumerate(data.get('rows', [])):
         'color':     '#78BE20' if severity=='Green' else ('#f59e0b' if severity=='Yellow' else '#3b82f6'),
         'allDone':   'Yes' if issues == 0 else 'No',
         'woReq':     issues,
+        'issueNotes': issue_notes,
         'woCreated': '',
         'woComp':    0,
         'woDisp':    0,
