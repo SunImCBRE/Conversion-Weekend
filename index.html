@@ -579,7 +579,7 @@ async function loadLA(){
   body.innerHTML='<div style="text-align:center;color:var(--muted);padding:40px;font-size:.8rem">&#8635; Fetching from Smartsheet...</div>';
   try{
     const res=await fetch(`https://api.smartsheet.com/2.0/sheets/${SS_SHEET}`,{
-      headers:{'Authorization':'Bearer '+SS_TOKEN,'Content-Type':'application/json'}
+      headers:{'Authorization':'Bearer '+SS_TOKEN}
     });
     if(!res.ok){const e=await res.json();throw new Error(e.message||res.status);}
     const d=await res.json();
@@ -621,6 +621,7 @@ function nav(id,el){
   document.getElementById(id).classList.add('active');el.classList.add('active');
   if(id==='la')loadLA();
 }
+setInterval(()=>{if(document.getElementById('la').classList.contains('active'))loadLA();},10*60*1000);
 
 // ---- INIT ----
 document.getElementById('ts').textContent='Updated '+new Date().toLocaleString();
