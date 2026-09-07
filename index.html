@@ -374,11 +374,11 @@ function renderSV(){
     <td style="font-weight:600;color:${G};cursor:pointer" onclick="openSVMo(${r._i})">${r.name}</td>
     <td>${r.city}</td><td><span class="badge bgr">${r.state}</span></td>
     <td style="color:var(--muted)">${r.date}</td><td>${r.inspector}</td>
-    <td>${sevB(r.severity)}</td>
-    <td>${r.hasDay2&&String(r.hasDay2).toLowerCase().includes('yes')?'<span class="day2-chip">D2</span>':'<span style="color:var(--muted);font-size:.65rem">—</span>'}</td>
     <td style="font-size:.7rem;color:var(--muted)">${r.ppm||'—'}</td>
     <td style="font-size:.7rem;color:var(--muted)">${r.rem||'—'}</td>
     <td style="font-size:.7rem;color:var(--muted)">${r.rd||'—'}</td>
+    <td>${sevB(r.severity)}</td>
+    <td>${r.hasDay2&&String(r.hasDay2).toLowerCase().includes('yes')?'<span class="day2-chip">D2</span>':'<span style="color:var(--muted);font-size:.65rem">—</span>'}</td>
     <td style="text-align:center">${r.woReq||0}</td><td style="text-align:center">${r.woComp||0}</td>
     <td>${r.allDone==='Yes'?'<span class="badge bg">Yes</span>':'<span class="badge br">No</span>'}</td>
     <td>${r.signage==='Yes'?'<span class="badge by">&#9888;</span>':r.signage==='No'?'<span class="badge bg">&#10003;</span>':'—'}</td>
@@ -459,11 +459,7 @@ function renderDTS(){
     <td>${r.city}</td><td>${r.state}</td>
     <td contenteditable="true" oninput="eSV(${r._i},'date',this.textContent)">${r.date}</td>
     <td contenteditable="true" oninput="eSV(${r._i},'inspector',this.textContent)">${r.inspector}</td>
-    <td><select onchange="eSV(${r._i},'severity',this.value)" style="background:var(--card2);border:1px solid var(--border);color:var(--text);padding:2px 6px;border-radius:4px;font-size:.72rem">
-      <option ${r.severity==='Green'?'selected':''}>Green</option>
-      <option ${r.severity==='Yellow'?'selected':''}>Yellow</option>
-      <option ${r.severity==='Blue'?'selected':''}>Blue</option>
-    </select></td>
+    <td onclick="cycleSev(${r._i},this)" style="cursor:pointer" title="Click to change severity">${sevB(r.severity)}</td>
     <td contenteditable="true" oninput="eSV(${r._i},'allDone',this.textContent)">${r.allDone}</td>
     <td>${r.hasDay2&&String(r.hasDay2).toLowerCase().includes('yes')?'<span class="day2-chip">D2</span>':'—'}</td>
     <td contenteditable="true" oninput="eSV(${r._i},'woReq',this.textContent)" style="text-align:center">${r.woReq}</td>
@@ -482,6 +478,13 @@ function dtTab(t){
 }
 function eWO(i,f,v_){const r=woE.find(x=>x._i===i);if(r)r[f]=v_;}
 function eSV(i,f,v_){const r=svE.find(x=>x._i===i);if(r)r[f]=v_;}
+function cycleSev(i,td){
+  const r=svE.find(x=>x._i===i);if(!r)return;
+  const opts=['Green','Yellow','Blue'];
+  const cur=opts.indexOf(r.severity);
+  r.severity=opts[(cur+1)%opts.length];
+  td.innerHTML=sevB(r.severity);
+}
 function saveAll(){
   try{localStorage.setItem('53wo',JSON.stringify(woE));localStorage.setItem('53sv',JSON.stringify(svE));}catch(e){}
   const b=document.getElementById('savebtn');
