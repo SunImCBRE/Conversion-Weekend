@@ -365,21 +365,7 @@ function woP(d){woPage+=d;if(woPage<0)woPage=0;const mp=Math.ceil(woF.length/woP
 // ---- SURVEYS ----
 let svPage=0,svF=[]; const svPer=25;
 function initSV(){
-  const total=svData.length;
-  const hadIssues=svData.filter(r=>Number(r.issues)>0||r.severity==='Yellow'||r.severity==='Blue').length;
-  const clean=svData.filter(r=>Number(r.issues)===0&&r.severity==='Green').length;
-  const yellow=svData.filter(r=>r.severity==='Yellow').length;
-  const green=svData.filter(r=>r.severity==='Green').length;
-  const woReqTotal=svData.reduce((a,r)=>a+(Number(r.woReq)||0),0);
-  const pct=(hadIssues/total*100).toFixed(1);
-  document.getElementById('sv_kpis').innerHTML=[
-    {v:String(total),l:'Total Surveys',a:G},
-    {v:String(hadIssues),l:'Had Issues',s:pct+'% of sites',a:R},
-    {v:String(clean),l:'Clean Sites',s:'No issues',a:G},
-    {v:String(yellow),l:'Yellow',s:'Needs attention',a:Y},
-    {v:String(green),l:'Green',s:'Good condition',a:G},
-    {v:woReqTotal.toLocaleString(),l:'WOs Requested',s:'From surveys',a:B},
-  ].map(k=>`<div class="kpi" style="--accent:${k.a}"><div class="val">${k.v}</div><div class="lbl">${k.l}</div><div class="sub">${k.s||''}</div></div>`).join('');
+  updateSVKpis(svData);
   const dayMap={'2026-09-04':0,'2026-09-05':0,'2026-09-06':0,'2026-09-07':0};
   svData.forEach(r=>{if(r.date&&dayMap[r.date]!==undefined)dayMap[r.date]++;});
   bar('cSvD',['Sep 4','Sep 5','Sep 6','Sep 7'],[dayMap['2026-09-04'],dayMap['2026-09-05'],dayMap['2026-09-06'],dayMap['2026-09-07']],[G,G,G,G]);
@@ -402,6 +388,24 @@ function initSV(){
   rds.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;document.getElementById('sf_rd').appendChild(o);});
   svF=[...svE];renderSV();
 }
+function updateSVKpis(data){
+  const total=data.length;
+  if(!total){document.getElementById('sv_kpis').innerHTML='<div class="kpi"><div class="val">0</div><div class="lbl">No results</div></div>';return;}
+  const hadIssues=data.filter(r=>Number(r.issues)>0||r.severity==='Yellow'||r.severity==='Blue').length;
+  const clean=data.filter(r=>Number(r.issues)===0&&r.severity==='Green').length;
+  const yellow=data.filter(r=>r.severity==='Yellow').length;
+  const green=data.filter(r=>r.severity==='Green').length;
+  const woReqTotal=data.reduce((a,r)=>a+(Number(r.woReq)||0),0);
+  const pct=(hadIssues/total*100).toFixed(1);
+  document.getElementById('sv_kpis').innerHTML=[
+    {v:String(total),l:'Total Surveys',a:G},
+    {v:String(hadIssues),l:'Had Issues',s:pct+'% of sites',a:R},
+    {v:String(clean),l:'Clean Sites',s:'No issues',a:G},
+    {v:String(yellow),l:'Yellow',s:'Needs attention',a:Y},
+    {v:String(green),l:'Green',s:'Good condition',a:G},
+    {v:woReqTotal.toLocaleString(),l:'WOs Requested',s:'From surveys',a:B},
+  ].map(k=>`<div class="kpi" style="--accent:${k.a}"><div class="val">${k.v}</div><div class="lbl">${k.l}</div><div class="sub">${k.s||''}</div></div>`).join('');
+}
 function fSV(){
   const st=v('sf_st'),sv_=v('sf_sv'),dt=v('sf_dt'),d2=v('sf_d2'),ppm=v('sf_ppm'),rem=v('sf_rem'),rd=v('sf_rd'),q=v('sf_q').toLowerCase();
   svF=svE.filter(r=>
@@ -409,7 +413,7 @@ function fSV(){
     (d2===''||(d2==='1'?String(r.hasDay2).toLowerCase().includes('yes'):!String(r.hasDay2).toLowerCase().includes('yes')))&&
     (!ppm||r.ppm===ppm)&&(!rem||r.rem===rem)&&(!rd||r.rd===rd)&&
     (!q||[r.name,r.city,r.inspector,r.propid,r.ppm,r.rem,r.rd].join(' ').toLowerCase().includes(q)));
-  svPage=0;renderSV();
+  svPage=0;updateSVKpis(svF);renderSV();
 }
 function renderSV(){
   document.getElementById('svTb').innerHTML=svF.slice(svPage*svPer,(svPage+1)*svPer).map(r=>`<tr>
