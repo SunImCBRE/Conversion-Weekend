@@ -291,15 +291,27 @@ function bar(id,labels,vals,colors){
 
 // ---- OVERVIEW ----
 function initOV(){
+  const woTotal=woData.length;
+  const woCBRE=woData.filter(r=>r.cbre==='CBRE').length;
+  const woNonCBRE=woData.filter(r=>r.cbre==='NON-CBRE').length;
+  const woDay2=woData.filter(r=>r.day2).length;
+  const woDisp=woData.filter(r=>['D','DAK','DEA','DAR','DHD','DST'].includes(r.status)).length;
+  const woCBT=woData.filter(r=>r.status==='CBT').length;
+  const woCMP=woData.filter(r=>['CBT','CMP','CPW','CRD'].includes(r.status)).length;
+  const svTotal=svData.length;
+  const svIssues=svData.filter(r=>Number(r.issues)>0||r.severity==='Yellow'||r.severity==='Blue').length;
+  const svWoReq=svData.reduce((a,r)=>a+(Number(r.woReq)||0),0);
+  const woPct=woTotal?(woCMP/woTotal*100).toFixed(1)+'%':'—';
+  const svPct=svTotal?(svIssues/svTotal*100).toFixed(1)+'%':'—';
   document.getElementById('ov_kpis').innerHTML=[
-    {v:'966',l:'Total Work Orders',s:'All statuses',a:G},
-    {v:'441',l:'CBRE In Scope',s:'Scenario 1 · 45.7%',a:G},
-    {v:'489',l:'Client In Scope',s:'Scenario 3 · 50.6%',a:N},
-    {v:'99',l:'Day 2 WOs',s:'Items flagged Day 2',a:Y},
-    {v:'595',l:'Field Surveys',s:'Properties visited',a:B},
-    {v:'82.8%',l:'Sites w/ Issues',s:'497 of 595',a:R},
-    {v:'1,551',l:'WOs Requested',s:'From field surveys',a:'#a855f7'},
-    {v:'6.3%',l:'WO Completion',s:'97 completed',a:G},
+    {v:woTotal.toLocaleString(),l:'Total Work Orders',s:'All statuses',a:G},
+    {v:woCBRE.toLocaleString(),l:'CBRE In Scope',s:(woCBRE/woTotal*100).toFixed(1)+'%',a:G},
+    {v:woNonCBRE.toLocaleString(),l:'Client In Scope',s:(woNonCBRE/woTotal*100).toFixed(1)+'%',a:N},
+    {v:woDay2.toLocaleString(),l:'Day 2 WOs',s:'Items flagged Day 2',a:Y},
+    {v:svTotal.toLocaleString(),l:'Field Surveys',s:'Properties visited',a:B},
+    {v:svPct,l:'Sites w/ Issues',s:svIssues+' of '+svTotal,a:R},
+    {v:svWoReq.toLocaleString(),l:'WOs Requested',s:'From field surveys',a:'#a855f7'},
+    {v:woPct,l:'WO Completion',s:woCMP+' completed',a:G},
   ].map(k=>`<div class="kpi" style="--accent:${k.a}"><div class="val">${k.v}</div><div class="lbl">${k.l}</div><div class="sub">${k.s}</div></div>`).join('');
 
   donut('cScope',['CBRE In Scope','Client In Scope','CBRE Holds Contract','Referral'],[441,489,34,2],[G,B,Y,'#a855f7']);
@@ -325,11 +337,19 @@ function initOV(){
 // ---- WORK ORDERS ----
 let woPage=0,woF=[]; const woPer=25;
 function initWO(){
+  const _woTot=woData.length;
+  const _woP1=woData.filter(r=>r.priority==='P1').length;
+  const _woDisp=woData.filter(r=>['D','DAK','DEA','DAR','DHD','DST'].includes(r.status)).length;
+  const _woCBT=woData.filter(r=>r.status==='CBT').length;
+  const _woD2=woData.filter(r=>r.day2).length;
+  const _woBid=woData.reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
   document.getElementById('wo_kpis').innerHTML=[
-    {v:'966',l:'Total WOs',a:G},{v:'748',l:'Priority 1',s:'High urgency',a:R},
-    {v:'731',l:'Dispatched',s:'75.7%',a:B},{v:'103',l:'Completed by Tech',s:'10.7%',a:G},
-    {v:'99',l:'Day 2 Items',s:'Flagged for Day 2',a:Y},
-    {v:'$'+woData.reduce((a,r)=>a+(parseFloat(r.amount)||0),0).toLocaleString('en',{maximumFractionDigits:0}),l:'Total Bid Value',a:'#a855f7'},
+    {v:_woTot.toLocaleString(),l:'Total WOs',a:G},
+    {v:_woP1.toLocaleString(),l:'Priority 1',s:'High urgency',a:R},
+    {v:_woDisp.toLocaleString(),l:'Dispatched',s:(_woDisp/_woTot*100).toFixed(1)+'%',a:B},
+    {v:_woCBT.toLocaleString(),l:'Completed by Tech',s:(_woCBT/_woTot*100).toFixed(1)+'%',a:G},
+    {v:_woD2.toLocaleString(),l:'Day 2 Items',s:'Flagged for Day 2',a:Y},
+    {v:'$'+_woBid.toLocaleString('en',{maximumFractionDigits:0}),l:'Total Bid Value',a:'#a855f7'},
   ].map(k=>`<div class="kpi" style="--accent:${k.a}"><div class="val">${k.v}</div><div class="lbl">${k.l}</div><div class="sub">${k.s||''}</div></div>`).join('');
   donut('cPri',['P1','P2','P3','P4','P5','P6'],[748,71,103,30,11,3],[R,'#f97316',Y,G,B,'#6b8f72']);
   hbar('cGrp',['Maint & Repair','Janitorial','Grounds & Parking','Banking Equip','Furniture/Fix','Security','Moves/Adds','Env/H/S'],[398,348,139,27,21,20,10,3],PAL);
