@@ -307,9 +307,11 @@ function initOV(){
   bar('cStatus',['Dispatched','Completed','Disp/EA','Closed Pend','Disp Ack','Cancelled','Open'],[731,103,45,26,21,15,9],[G,'#00e09a',B,Y,'#a855f7',R,'#f97316']);
   donut('cSev',['Yellow','Green','Blue'],[335,258,2],[Y,G,B]);
   document.getElementById('sevDL').innerHTML=[['Yellow — Needs Attention',Y],['Green — Good',G],['Blue — Special',B]].map(([l,c])=>`<div class="item"><div class="dot" style="background:${c}"></div>${l}</div>`).join('');
+  const _svDay={'2026-09-04':0,'2026-09-05':0,'2026-09-06':0,'2026-09-07':0};
+  svData.forEach(r=>{if(r.date&&_svDay[r.date]!==undefined)_svDay[r.date]++;});
   new Chart(document.getElementById('cDaily'),{type:'line',data:{labels:['Sep 4','Sep 5','Sep 6','Sep 7'],datasets:[
     {label:'Work Orders',data:[4,412,550,0],borderColor:G,backgroundColor:G+'22',fill:true,tension:.4,pointRadius:5},
-    {label:'Surveys',data:[2,325,262,3],borderColor:B,backgroundColor:B+'22',fill:true,tension:.4,pointRadius:5}
+    {label:'Surveys',data:[_svDay['2026-09-04'],_svDay['2026-09-05'],_svDay['2026-09-06'],_svDay['2026-09-07']],borderColor:B,backgroundColor:B+'22',fill:true,tension:.4,pointRadius:5}
   ]},options:{plugins:{legend:{labels:{boxWidth:9}}},scales:{x:{grid:{color:'#2a3040'}},y:{grid:{color:'#2a3040'}}}}});
   bar('cState',['MI','TX','CA','AZ','FL'],[447,300,157,54,8],PAL);
   bar('cPipe',['Requested','Created','Dispatched','Completed','Cancelled'],[1551,1550,1037,97,92],[B,G,Y,'#00e09a',R]);
@@ -363,14 +365,26 @@ function woP(d){woPage+=d;if(woPage<0)woPage=0;const mp=Math.ceil(woF.length/woP
 // ---- SURVEYS ----
 let svPage=0,svF=[]; const svPer=25;
 function initSV(){
+  const total=svData.length;
+  const hadIssues=svData.filter(r=>Number(r.issues)>0||r.severity==='Yellow'||r.severity==='Blue').length;
+  const clean=svData.filter(r=>Number(r.issues)===0&&r.severity==='Green').length;
+  const yellow=svData.filter(r=>r.severity==='Yellow').length;
+  const green=svData.filter(r=>r.severity==='Green').length;
+  const woReqTotal=svData.reduce((a,r)=>a+(Number(r.woReq)||0),0);
+  const pct=(hadIssues/total*100).toFixed(1);
   document.getElementById('sv_kpis').innerHTML=[
-    {v:'595',l:'Total Surveys',a:G},{v:'497',l:'Had Issues',s:'83.5% of sites',a:R},
-    {v:'98',l:'Clean Sites',s:'No issues',a:G},{v:'335',l:'Yellow',s:'Needs attention',a:Y},
-    {v:'258',l:'Green',s:'Good condition',a:G},{v:'1,551',l:'WOs Requested',s:'From surveys',a:B},
+    {v:String(total),l:'Total Surveys',a:G},
+    {v:String(hadIssues),l:'Had Issues',s:pct+'% of sites',a:R},
+    {v:String(clean),l:'Clean Sites',s:'No issues',a:G},
+    {v:String(yellow),l:'Yellow',s:'Needs attention',a:Y},
+    {v:String(green),l:'Green',s:'Good condition',a:G},
+    {v:woReqTotal.toLocaleString(),l:'WOs Requested',s:'From surveys',a:B},
   ].map(k=>`<div class="kpi" style="--accent:${k.a}"><div class="val">${k.v}</div><div class="lbl">${k.l}</div><div class="sub">${k.s||''}</div></div>`).join('');
-  bar('cSvD',['Sep 4','Sep 5','Sep 6','Sep 7'],[2,325,262,3],[G,G,G,G]);
+  const dayMap={'2026-09-04':0,'2026-09-05':0,'2026-09-06':0,'2026-09-07':0};
+  svData.forEach(r=>{if(r.date&&dayMap[r.date]!==undefined)dayMap[r.date]++;});
+  bar('cSvD',['Sep 4','Sep 5','Sep 6','Sep 7'],[dayMap['2026-09-04'],dayMap['2026-09-05'],dayMap['2026-09-06'],dayMap['2026-09-07']],[G,G,G,G]);
   const stIs={},stTot={};
-  svData.forEach(r=>{if(!r.state)return;stTot[r.state]=(stTot[r.state]||0)+1;if(r.issues&&r.issues.includes('Concerns'))stIs[r.state]=(stIs[r.state]||0)+1;});
+  svData.forEach(r=>{if(!r.state)return;stTot[r.state]=(stTot[r.state]||0)+1;if(Number(r.issues)>0)stIs[r.state]=(stIs[r.state]||0)+1;});
   const stL=Object.keys(stTot).sort();
   new Chart(document.getElementById('cSvSt'),{type:'bar',data:{labels:stL,datasets:[
     {label:'Issues',data:stL.map(s=>stIs[s]||0),backgroundColor:R+'88',borderRadius:4},
